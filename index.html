@@ -1,0 +1,60 @@
+<body>
+    <h1>Hand Detection</h1>
+    <button id="startButton" onclick="startCamera()">Start Camera</button>
+    <button id="stopButton" onclick="stopCamera()">Stop Camera</button>
+    <br>
+    <img id="video" src="" width="640" height="480">
+    <div id="counter"></div>
+
+    <script>
+        const video = document.getElementById('video');
+        const counterDiv = document.getElementById('counter');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+
+        let socket;  // Declare the WebSocket variable
+
+        // Function to start the camera
+        function startCamera() {
+            // Disable start button and enable stop button
+            startButton.disabled = true;
+            stopButton.disabled = false;
+
+            // Create a WebSocket connection for receiving counter updates
+            socket = new WebSocket('ws://localhost:5000/ws');
+
+            // Listen for messages from the server
+            socket.onmessage = function(event) {
+                const message = event.data;
+
+                // Check if the message is a counter update
+                if (message.startsWith('counter:')) {
+                    const counterText = message.substring(8);
+                    counterDiv.innerText = counterText;
+                } else {
+                    // Otherwise, update the video frame
+                    video.src = message;
+                }
+            };
+
+            // Start the video stream
+            video.src = "{{ url_for('video_feed') }}";
+        }
+
+        // Function to stop the camera
+        function stopCamera() {
+            // Enable start button and disable stop button
+            startButton.disabled = false;
+            stopButton.disabled = true;
+
+            // Close the WebSocket connection
+            if (socket) {
+                socket.close();
+            }
+
+            // Stop the video stream by setting the source to an empty string
+            video.src = "";
+        }
+    </script>
+</body>
+
